@@ -99,6 +99,61 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
     }
   };
 
+  const handleReschedule = async (appointmentId: string) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/appointments/${appointmentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`, // Ensure token is valid
+        },
+        body: JSON.stringify(appointmentData), // Send updated appointment data
+      });
+
+      if (response.ok) {
+        alert('Appointment rescheduled successfully!');
+        const updatedAppointment = await response.json();
+        setAppointments((prev) =>
+          prev.map((appointment) =>
+            appointment.id === appointmentId ? updatedAppointment : appointment
+          )
+        );
+        setShowAppointmentForm(false);
+      } else {
+        const error = await response.json();
+        alert(`Failed to reschedule appointment: ${error.message}`);
+      }
+    } catch (error) {
+      console.error('Error rescheduling appointment:', error);
+      alert('An error occurred while rescheduling the appointment.');
+    }
+  };
+
+  const handleCheckIn = async (appointmentId: string) => {
+    console.log('Checking in appointment with ID:', appointmentId); // Debugging log
+    if (window.confirm('Are you sure you want to check in this appointment? This will remove it from the list.')) {
+      try {
+        const response = await fetch(`http://localhost:5000/api/appointments/${appointmentId}`, {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`, // Ensure token is valid
+          },
+        });
+
+        if (response.ok) {
+          alert('Appointment checked in successfully!');
+          setAppointments((prev) => prev.filter((appointment) => appointment.id !== appointmentId));
+        } else {
+          const error = await response.json();
+          alert(`Failed to check in appointment: ${error.message}`);
+        }
+      } catch (error) {
+        console.error('Error checking in appointment:', error);
+        alert('An error occurred while checking in the appointment.');
+      }
+    }
+  };
+
   // Sort records, vitals and appointments by date (newest first)
   const sortedMedicalRecords = [...medicalRecords].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -522,12 +577,17 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
                       <div>
                         <div className="flex items-center">
                           <h4 className="text-md font-medium">{appointment.purpose}</h4>
-                          <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
-                            appointment.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
-                            appointment.status === 'completed' ? 'bg-green-100 text-green-800' :
-                            appointment.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
+                          <span
+                            className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
+                              appointment.status === 'scheduled'
+                                ? 'bg-blue-100 text-blue-800'
+                                : appointment.status === 'completed'
+                                ? 'bg-green-100 text-green-800'
+                                : appointment.status === 'cancelled'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}
+                          >
                             {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
                           </span>
                         </div>
@@ -539,10 +599,25 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
                       <div className="mt-2 md:mt-0 flex space-x-2">
                         {appointment.status === 'scheduled' && (
                           <>
-                            <button className="text-sm text-white bg-sky-600 hover:bg-sky-700 px-3 py-1 rounded-md">
+                            <button
+                              onClick={() => handleCheckIn(appointment.id)}
+                              className="text-sm text-white bg-sky-600 hover:bg-sky-700 px-3 py-1 rounded-md"
+                            >
                               Check In
                             </button>
-                            <button className="text-sm text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 px-3 py-1 rounded-md">
+                            <button
+                              onClick={() => {
+                                setAppointmentData({
+                                  purpose: appointment.purpose,
+                                  date: appointment.date,
+                                  time: appointment.time,
+                                  doctorName: appointment.doctorName,
+                                  notes: appointment.notes || '', // Ensure notes is a string
+                                }); // Pre-fill form with existing data
+                                setShowAppointmentForm(true);
+                              }}
+                              className="text-sm text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 px-3 py-1 rounded-md"
+                            >
                               Reschedule
                             </button>
                           </>
