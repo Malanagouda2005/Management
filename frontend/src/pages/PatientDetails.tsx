@@ -83,12 +83,10 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
       });
 
       if (response.ok) {
+        const newAppointment = await response.json(); // Get the appointment with the backend-generated ID
         alert('Appointment scheduled successfully!');
         setShowAppointmentForm(false);
-        setAppointments((prev) => [
-          ...prev,
-          { ...appointmentData, id: Date.now().toString(), status: 'scheduled', patientId: patientId },
-        ]);
+        setAppointments((prev) => [...prev, newAppointment]); // Use the backend-generated appointment
       } else {
         const error = await response.json();
         alert(`Failed to schedule appointment: ${error.message}`);
@@ -129,7 +127,7 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
     }
   };
 
-  const handleCheckIn = async (appointmentId: string) => {
+  const handleCheckIn = async (appointmentId: number) => {
     console.log('Checking in appointment with ID:', appointmentId); // Debugging log
     if (window.confirm('Are you sure you want to check in this appointment? This will remove it from the list.')) {
       try {
@@ -142,7 +140,7 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
 
         if (response.ok) {
           alert('Appointment checked in successfully!');
-          setAppointments((prev) => prev.filter((appointment) => appointment.id !== appointmentId));
+          setAppointments((prev) => prev.filter((appointment) => appointment.id !== appointmentId.toString()));
         } else {
           const error = await response.json();
           alert(`Failed to check in appointment: ${error.message}`);
@@ -562,13 +560,15 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
           <div className="p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-medium">Appointments</h3>
-              <button className="flex items-center text-sm text-sky-600 hover:text-sky-800"
-              onClick={() => setShowAppointmentForm(true)}>
+              <button
+                className="flex items-center text-sm text-sky-600 hover:text-sky-800"
+                onClick={() => setShowAppointmentForm(true)}
+              >
                 <PlusCircle className="h-4 w-4 mr-1" />
                 Schedule Appointment
               </button>
             </div>
-            
+
             {sortedAppointments.length > 0 ? (
               <div className="space-y-4">
                 {sortedAppointments.map((appointment) => (
@@ -600,7 +600,7 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
                         {appointment.status === 'scheduled' && (
                           <>
                             <button
-                              onClick={() => handleCheckIn(appointment.id)}
+                              onClick={() => handleCheckIn(Number(appointment.id))}
                               className="text-sm text-white bg-sky-600 hover:bg-sky-700 px-3 py-1 rounded-md"
                             >
                               Check In
@@ -637,8 +637,10 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
                 <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-3" />
                 <h3 className="text-gray-600 font-medium mb-1">No Appointments</h3>
                 <p className="text-gray-500 mb-4">This patient doesn't have any appointments scheduled.</p>
-                <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-sky-600 hover:bg-sky-700"
-                onClick={() => setShowAppointmentForm(true)}>
+                <button
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-sky-600 hover:bg-sky-700"
+                  onClick={() => setShowAppointmentForm(true)}
+                >
                   <PlusCircle className="h-4 w-4 mr-1" />
                   Schedule Appointment
                 </button>

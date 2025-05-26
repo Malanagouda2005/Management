@@ -14,21 +14,25 @@ export class AppointmentController {
     }
   }
 
-  public async deleteAppointment(req: Request, res: Response): Promise<void> {
-    try {
-      const appointmentId = parseInt(req.params.id, 10);
-      const deleted = await appointmentService.deleteAppointment(appointmentId);
+ public async deleteAppointment(req: Request, res: Response): Promise<void> {
+  try {
+    const appointmentId = parseInt(req.params.id, 10); // Parse ID as an integer
+    console.log('Received DELETE request for appointment ID:', appointmentId); // Debugging log
 
-      if (deleted) {
-        res.status(200).json({ message: 'Appointment deleted successfully' }); // OK
-      } else {
-        res.status(404).json({ message: 'Appointment not found' }); // Not Found
-      }
-    } catch (error) {
-      console.error('Error deleting appointment:', error);
-      res.status(500).json({ message: 'Failed to delete appointment', error: (error as Error).message });
+    const deleted = await appointmentService.deleteAppointment(appointmentId);
+
+    if (deleted) {
+      console.log('Appointment deleted successfully:', appointmentId); // Debugging log
+      res.status(200).json({ message: 'Appointment deleted successfully' }); // OK
+    } else {
+      console.log('Appointment not found:', appointmentId); // Debugging log
+      res.status(404).json({ message: 'Appointment not found' }); // Not Found
     }
+  } catch (error) {
+    console.error('Error deleting appointment:', error);
+    res.status(500).json({ message: 'Failed to delete appointment', error: (error as Error).message });
   }
+}
 
   public async updateAppointment(req: Request, res: Response): Promise<void> {
     try {
