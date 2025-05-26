@@ -9,7 +9,7 @@ interface PatientListProps {
 }
 
 const PatientList: React.FC<PatientListProps> = ({ onPageChange }) => {
-  const { patients, getPatientMedicalRecords } = usePatients();
+  const { patients } = usePatients();
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredPatients, setFilteredPatients] = useState<Patient[]>([]);
   const [sortField, setSortField] = useState<keyof Patient>('lastName');
@@ -119,59 +119,53 @@ const PatientList: React.FC<PatientListProps> = ({ onPageChange }) => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredPatients.map((patient) => {
-                  const medicalRecords = getPatientMedicalRecords(patient.id);
-                  return (
-                    <tr 
-                      key={patient.id} 
-                      className="hover:bg-gray-50 cursor-pointer"
-                      onClick={() => onPageChange('patient-details', patient.id)}
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 font-bold">
-                            {patient.firstName[0]}{patient.lastName[0]}
+                {filteredPatients.map((patient) => (
+                  <tr 
+                    key={patient.id.toString()} // Ensure id is a string
+                    className="hover:bg-gray-50 cursor-pointer"
+                    onClick={() => onPageChange('patient-details', patient.id)}
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 font-bold">
+                          {patient.firstName[0]}{patient.lastName[0]}
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">
+                            {patient.firstName} {patient.lastName}
                           </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {patient.firstName} {patient.lastName}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {patient.bloodType ? `Blood Type: ${patient.bloodType}` : 'No blood type on record'}
-                            </div>
+                          <div className="text-sm text-gray-500">
+                            {patient.bloodType ? `Blood Type: ${patient.bloodType}` : 'No blood type on record'}
                           </div>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{calculateAge(patient.dateOfBirth)} years</div>
-                        <div className="text-sm text-gray-500">
-                          {patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{patient.contactNumber}</div>
-                        <div className="text-sm text-gray-500">{patient.email}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">#{patient.id.substring(0, 6)}</div>
-                        <div className="text-sm text-gray-500">
-                          {medicalRecords.length} records
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onPageChange('patient-details', patient.id);
-                          }}
-                          className="text-sky-600 hover:text-sky-900"
-                        >
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{calculateAge(patient.dateOfBirth)} years</div>
+                      <div className="text-sm text-gray-500">
+                        {patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{patient.contactNumber}</div>
+                      <div className="text-sm text-gray-500">{patient.email}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">#{patient.id.substring(0, 6)}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onPageChange('patient-details', patient.id);
+                        }}
+                        className="text-sky-600 hover:text-sky-900"
+                      >
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

@@ -19,7 +19,7 @@ const testConnection = async () => {
   try {
     await sequelize.authenticate();
     console.log('Sequelize connected successfully');
-    console.log('JWT_SECRET:', process.env.JWT_SECRET);
+  
   } catch (error) {
     console.error('Unable to connect to the database:', error);
     throw error;

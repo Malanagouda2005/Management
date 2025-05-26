@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import axios from 'axios';
 import { Patient, MedicalRecord, VitalSigns, Appointment } from '../types/types';
 import { generateId } from '../utils/helpers';
 
@@ -33,6 +34,29 @@ export const PatientsProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [medicalRecords, setMedicalRecords] = useState<MedicalRecord[]>([]);
   const [vitalSigns, setVitalSigns] = useState<VitalSigns[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+
+  // Fetch patients from the API
+  useEffect(() => {
+  const fetchPatients = async () => {
+    try {
+      // Retrieve the token from localStorage (or wherever it's stored)
+      const token = localStorage.getItem('token');
+
+      // Make the API request with the Authorization header
+      const response = await axios.get('http://localhost:5000/api/patients', {
+        headers: {
+          Authorization: `Bearer ${token}`, // Include the token
+        },
+      });
+
+      setPatients(response.data);
+    } catch (error) {
+      console.error('Error fetching patients:', error);
+    }
+  };
+
+  fetchPatients();
+}, []);
 
   // Load data from localStorage on initial mount
   useEffect(() => {

@@ -33,15 +33,16 @@ export class PatientService {
   }
 
   // Get all patients
-  public async getAllPatients(): Promise<Patient[]> {
-    try {
-      const patients = await query('SELECT * FROM patients');
-      return patients;
-    } catch (error) {
-      console.error('Error fetching patients:', error);
-      throw new Error('Failed to fetch patients');
-    }
+public async getAllPatients(): Promise<Patient[]> {
+  try {
+    const patients = await query('SELECT * FROM patients'); // Fetch all patients from the database
+    console.log('Database Query Result:', patients); // Debugging log
+    return patients;
+  } catch (error) {
+    console.error('Error fetching patients:', error);
+    throw new Error('Failed to fetch patients');
   }
+}
 
   // Get a patient by ID
   public async getPatientById(id: string): Promise<Patient | null> {

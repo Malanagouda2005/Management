@@ -32,15 +32,15 @@ export class PatientController {
   }
 }
 
-  public async getPatients(req: Request, res: Response): Promise<void> {
-    try {
-      const patients = await patientService.getAllPatients();
-      res.status(200).json(patients); // OK
-    } catch (error) {
-      console.error('Error fetching patients:', error);
-      res.status(500).json({ message: 'Failed to fetch patients', error: (error as Error).message });
-    }
+public async getPatients(req: Request, res: Response): Promise<void> {
+  try {
+    const patients = await patientService.getAllPatients();
+    res.status(200).json(patients); // Send the patients as a JSON response
+  } catch (error) {
+    console.error('Error fetching patients:', error);
+    res.status(500).json({ message: 'Failed to fetch patients', error: (error as Error).message });
   }
+}
 
   public async getPatientById(req: Request, res: Response): Promise<void> {
     try {
