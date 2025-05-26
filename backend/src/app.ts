@@ -4,6 +4,8 @@ import cors from 'cors';
 import { connect as connectDB } from './utils/db';
 import authRoutes from './routes/authRoutes';
 import patientRoutes from './routes/patientRoutes';
+import appointmentRoutes from './routes/appointmentRoutes';
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -19,6 +21,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientRoutes);
+
+app.use('/api/appointments', appointmentRoutes);
 
 
 // Start the server

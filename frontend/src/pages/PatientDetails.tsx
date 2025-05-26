@@ -26,6 +26,14 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
   const [vitalSigns, setVitalSigns] = useState<VitalSigns[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [activeTab, setActiveTab] = useState('overview');
+  const [showAppointmentForm, setShowAppointmentForm] = useState(false);
+  const [appointmentData, setAppointmentData] = useState({
+    purpose: '',
+    date: '',
+    time: '',
+    doctorName: '',
+    notes: '',
+  });
 
   useEffect(() => {
     // Fetch patient and related data
@@ -56,6 +64,38 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
     if (window.confirm('Are you sure you want to delete this patient? This action cannot be undone.')) {
       deletePatient(patientId);
       onPageChange('patients');
+    }
+  };
+
+  const handleScheduleAppointment = async () => {
+    console.log('Scheduling appointment...'); // Debugging log
+    try {
+      const response = await fetch('http://localhost:5000/api/appointments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`, // Ensure token is valid
+        },
+        body: JSON.stringify({
+          ...appointmentData,
+          patientId: patient?.id, // Ensure patient ID is passed
+        }),
+      });
+
+      if (response.ok) {
+        alert('Appointment scheduled successfully!');
+        setShowAppointmentForm(false);
+        setAppointments((prev) => [
+          ...prev,
+          { ...appointmentData, id: Date.now().toString(), status: 'scheduled', patientId: patientId },
+        ]);
+      } else {
+        const error = await response.json();
+        alert(`Failed to schedule appointment: ${error.message}`);
+      }
+    } catch (error) {
+      console.error('Error scheduling appointment:', error);
+      alert('An error occurred while scheduling the appointment.');
     }
   };
 
@@ -273,7 +313,7 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
                   <div className="bg-gray-50 p-4 rounded-md text-center">
                     <Calendar className="h-8 w-8 mx-auto text-gray-400 mb-2" />
                     <p className="text-gray-500">No upcoming appointments</p>
-                    <button className="mt-2 text-sky-600 text-sm hover:text-sky-800">
+                    <button className="mt-2 text-sky-600 text-sm hover:text-sky-800" onClick={() => setShowAppointmentForm(true)}>
                       Schedule Appointment
                     </button>
                   </div>
@@ -467,7 +507,8 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
           <div className="p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-medium">Appointments</h3>
-              <button className="flex items-center text-sm text-sky-600 hover:text-sky-800">
+              <button className="flex items-center text-sm text-sky-600 hover:text-sky-800"
+              onClick={() => setShowAppointmentForm(true)}>
                 <PlusCircle className="h-4 w-4 mr-1" />
                 Schedule Appointment
               </button>
@@ -521,7 +562,8 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
                 <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-3" />
                 <h3 className="text-gray-600 font-medium mb-1">No Appointments</h3>
                 <p className="text-gray-500 mb-4">This patient doesn't have any appointments scheduled.</p>
-                <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-sky-600 hover:bg-sky-700">
+                <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-sky-600 hover:bg-sky-700"
+                onClick={() => setShowAppointmentForm(true)}>
                   <PlusCircle className="h-4 w-4 mr-1" />
                   Schedule Appointment
                 </button>
@@ -530,6 +572,89 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
           </div>
         )}
       </div>
+
+
+    
+
+      {/* Schedule Appointment Form */}
+      {showAppointmentForm && (
+        <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-200 p-6">
+          <h3 className="text-lg font-medium text-gray-800 mb-4">Schedule Appointment</h3>
+          <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleScheduleAppointment();
+        }}
+        className="space-y-4"
+          >
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Purpose</label>
+          <input
+            type="text"
+            placeholder="Purpose"
+            value={appointmentData.purpose}
+            onChange={(e) => setAppointmentData({ ...appointmentData, purpose: e.target.value })}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Date</label>
+          <input
+            type="date"
+            value={appointmentData.date}
+            onChange={(e) => setAppointmentData({ ...appointmentData, date: e.target.value })}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Time</label>
+          <input
+            type="time"
+            value={appointmentData.time}
+            onChange={(e) => setAppointmentData({ ...appointmentData, time: e.target.value })}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Doctor Name</label>
+          <input
+            type="text"
+            placeholder="Doctor Name"
+            value={appointmentData.doctorName}
+            onChange={(e) => setAppointmentData({ ...appointmentData, doctorName: e.target.value })}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Notes</label>
+          <textarea
+            placeholder="Notes"
+            value={appointmentData.notes}
+            onChange={(e) => setAppointmentData({ ...appointmentData, notes: e.target.value })}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
+          />
+        </div>
+        <div className="flex justify-end space-x-4">
+          <button
+            type="button"
+            onClick={() => setShowAppointmentForm(false)}
+            className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-sky-600 hover:bg-sky-700"
+          >
+            Schedule
+          </button>
+        </div>
+          </form>
+        </div>
+      
+
+
+      )}
     </div>
   );
 };
