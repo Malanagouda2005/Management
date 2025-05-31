@@ -36,7 +36,7 @@ export class PatientService {
 public async getAllPatients(): Promise<Patient[]> {
   try {
     const patients = await query('SELECT * FROM patients'); // Fetch all patients from the database
-    console.log('Database Query Result:', patients); // Debugging log
+// Debugging log
     return patients;
   } catch (error) {
     console.error('Error fetching patients:', error);

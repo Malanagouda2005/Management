@@ -21,8 +21,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientRoutes);
-
 app.use('/api/appointments', appointmentRoutes);
+
 
 
 // Start the server

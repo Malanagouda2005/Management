@@ -50,6 +50,15 @@ export class AppointmentService {
     throw new Error('Failed to update appointment');
   }
 }
+public async getAppointments(): Promise<Appointment[]> {
+  try {
+    return await Appointment.findAll(); // Fetch all appointments
+  } catch (error) {
+    console.error('Error fetching appointments:', error);
+    throw new Error('Failed to fetch appointments');
+  }
+}
+
 }
 
 export default AppointmentService;

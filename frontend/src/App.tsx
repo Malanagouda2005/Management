@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
 import PatientList from './pages/PatientList';
@@ -15,6 +15,14 @@ function App() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Check if the user is logged in by verifying the token in local storage
+    const token = localStorage.getItem('token');
+    if (token) {
+      setLoggedIn(true);
+    }
+  }, []);
 
   const handlePageChange = (page: Page, patientId?: string) => {
     setCurrentPage(page);
