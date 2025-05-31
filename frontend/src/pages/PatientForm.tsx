@@ -30,6 +30,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ patientId, onPageChange }) =>
     allergies: []
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [successMessage, setSuccessMessage] = useState<string>(''); // New state for success message
 
   const isEditMode = Boolean(patientId);
 
@@ -120,7 +121,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ patientId, onPageChange }) =>
     };
 
     try {
-      const token = localStorage.getItem('token'); // Retrieve the token from localStorage
+      const token = localStorage.getItem('token');
       if (!token) {
         alert('You are not logged in. Please log in and try again.');
         return;
@@ -128,17 +129,16 @@ const PatientForm: React.FC<PatientFormProps> = ({ patientId, onPageChange }) =>
 
       const config = {
         headers: {
-          Authorization: `Bearer ${token}`, // Ensure the token is prefixed with "Bearer"
+          Authorization: `Bearer ${token}`,
         },
       };
 
       if (isEditMode && patientId) {
-        // Update patient in the database
         await axios.put(`http://localhost:5000/api/patients/${patientId}`, patientData, config);
         onPageChange('patient-details', patientId);
       } else {
-        // Add new patient to the database
         const response = await axios.post('http://localhost:5000/api/patients', patientData, config);
+        setSuccessMessage('Patient added successfully!'); // Set success message
         onPageChange('patient-details', response.data.id);
       }
     } catch (error: any) {
@@ -176,6 +176,12 @@ const PatientForm: React.FC<PatientFormProps> = ({ patientId, onPageChange }) =>
           {isEditMode ? 'Edit Patient' : 'Add New Patient'}
         </h1>
       </div>
+
+      {successMessage && (
+        <div className="mb-4 p-4 bg-green-100 text-green-800 rounded-md">
+          {successMessage}
+        </div>
+      )}
 
       <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
         <form onSubmit={handleSubmit} className="p-6">

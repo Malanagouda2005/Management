@@ -17,8 +17,7 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
     getPatient, 
     deletePatient, 
     getPatientMedicalRecords,
-    getPatientVitalSigns,
-    getPatientAppointments
+    getPatientVitalSigns
   } = usePatients();
 
   const [patient, setPatient] = useState<Patient | undefined>(undefined);
@@ -42,9 +41,42 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
       setPatient(patientData);
       setMedicalRecords(getPatientMedicalRecords(patientId));
       setVitalSigns(getPatientVitalSigns(patientId));
-      setAppointments(getPatientAppointments(patientId));
     }
-  }, [patientId, getPatient, getPatientMedicalRecords, getPatientVitalSigns, getPatientAppointments]);
+  }, [patientId, getPatient, getPatientMedicalRecords, getPatientVitalSigns]);
+
+  useEffect(() => {
+    // Fetch appointments when the "Appointments" tab is active
+    if (activeTab === 'appointments') {
+      const fetchAppointments = async () => {
+        try {
+          const token = localStorage.getItem('token');
+          if (!token) {
+            alert('You are not logged in. Please log in and try again.');
+            return;
+          }
+
+          const response = await fetch(`http://localhost:5000/api/appointments?patientId=${patientId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (response.ok) {
+            const appointmentsData = await response.json();
+            setAppointments(appointmentsData); // Update appointments state
+          } else {
+            const error = await response.json();
+            alert(`Failed to fetch appointments: ${error.message}`);
+          }
+        } catch (error) {
+          console.error('Error fetching appointments:', error);
+          alert('An error occurred while fetching appointments.');
+        }
+      };
+
+      fetchAppointments();
+    }
+  }, [activeTab, patientId]);
 
   if (!patient) {
     return (
@@ -161,7 +193,12 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
-  const sortedAppointments = [...appointments].sort(
+  const filteredAppointments = appointments.filter(
+    (appointment) =>
+      appointment.patientId === patient.id
+  );
+
+  const sortedAppointments = [...filteredAppointments].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
@@ -273,16 +310,7 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
           >
             Medical Records
           </button>
-          <button
-            onClick={() => setActiveTab('vitalSigns')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'vitalSigns'
-                ? 'border-sky-500 text-sky-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            Vital Signs
-          </button>
+         
           <button
             onClick={() => setActiveTab('appointments')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
@@ -386,49 +414,7 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
                 </div>
               </div>
 
-              <div>
-                <h4 className="text-sm font-medium text-gray-500 mb-2">Latest Vital Signs</h4>
-                {sortedVitalSigns.length > 0 ? (
-                  <div className="bg-gray-50 p-4 rounded-md">
-                    <div className="flex justify-between mb-2">
-                      <p className="text-sm font-medium">Vitals Check</p>
-                      <p className="text-xs text-gray-500">{formatDate(sortedVitalSigns[0].date)}</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <p className="text-xs text-gray-500">Blood Pressure</p>
-                        <p className="text-sm">{sortedVitalSigns[0].bloodPressure}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Heart Rate</p>
-                        <p className="text-sm">{sortedVitalSigns[0].heartRate} bpm</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Temperature</p>
-                        <p className="text-sm">{sortedVitalSigns[0].temperature}°C</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Oxygen Saturation</p>
-                        <p className="text-sm">{sortedVitalSigns[0].oxygenSaturation}%</p>
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => setActiveTab('vitalSigns')}
-                      className="mt-2 text-sky-600 text-sm hover:text-sky-800"
-                    >
-                      View all vitals
-                    </button>
-                  </div>
-                ) : (
-                  <div className="bg-gray-50 p-4 rounded-md text-center">
-                    <Heart className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-                    <p className="text-gray-500">No vital signs recorded</p>
-                    <button className="mt-2 text-sky-600 text-sm hover:text-sky-800">
-                      Add Vital Signs
-                    </button>
-                  </div>
-                )}
-              </div>
+             
             </div>
           </div>
         )}
@@ -575,53 +561,34 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
                   <div key={appointment.id} className="bg-gray-50 p-4 rounded-md">
                     <div className="flex flex-col md:flex-row md:justify-between">
                       <div>
-                        <div className="flex items-center">
-                          <h4 className="text-md font-medium">{appointment.purpose}</h4>
-                          <span
-                            className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
-                              appointment.status === 'scheduled'
-                                ? 'bg-blue-100 text-blue-800'
-                                : appointment.status === 'completed'
-                                ? 'bg-green-100 text-green-800'
-                                : appointment.status === 'cancelled'
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-gray-100 text-gray-800'
-                            }`}
-                          >
-                            {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
-                          </span>
-                        </div>
+                        <h4 className="text-md font-medium">{appointment.purpose}</h4>
                         <p className="text-sm text-gray-700 mt-1">
                           Date: {formatDate(appointment.date)} at {appointment.time}
                         </p>
                         <p className="text-sm text-gray-500">Dr. {appointment.doctorName}</p>
                       </div>
                       <div className="mt-2 md:mt-0 flex space-x-2">
-                        {appointment.status === 'scheduled' && (
-                          <>
-                            <button
-                              onClick={() => handleCheckIn(Number(appointment.id))}
-                              className="text-sm text-white bg-sky-600 hover:bg-sky-700 px-3 py-1 rounded-md"
-                            >
-                              Check In
-                            </button>
-                            <button
-                              onClick={() => {
-                                setAppointmentData({
-                                  purpose: appointment.purpose,
-                                  date: appointment.date,
-                                  time: appointment.time,
-                                  doctorName: appointment.doctorName,
-                                  notes: appointment.notes || '', // Ensure notes is a string
-                                }); // Pre-fill form with existing data
-                                setShowAppointmentForm(true);
-                              }}
-                              className="text-sm text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 px-3 py-1 rounded-md"
-                            >
-                              Reschedule
-                            </button>
-                          </>
-                        )}
+                        <button
+                          onClick={() => handleCheckIn(Number(appointment.id))}
+                          className="text-sm text-white bg-sky-600 hover:bg-sky-700 px-3 py-1 rounded-md"
+                        >
+                          Check In
+                        </button>
+                        <button
+                          onClick={() => {
+                            setAppointmentData({
+                              purpose: appointment.purpose,
+                              date: appointment.date,
+                              time: appointment.time,
+                              doctorName: appointment.doctorName,
+                              notes: appointment.notes || '',
+                            });
+                            setShowAppointmentForm(true);
+                          }}
+                          className="text-sm text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 px-3 py-1 rounded-md"
+                        >
+                          Reschedule
+                        </button>
                       </div>
                     </div>
                     {appointment.notes && (
@@ -635,8 +602,8 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
             ) : (
               <div className="bg-gray-50 p-8 rounded-md text-center">
                 <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-3" />
-                <h3 className="text-gray-600 font-medium mb-1">No Appointments</h3>
-                <p className="text-gray-500 mb-4">This patient doesn't have any appointments scheduled.</p>
+                <h3 className="text-gray-600 font-medium mb-1">No Scheduled Appointments</h3>
+                <p className="text-gray-500 mb-4">This patient doesn't have any scheduled appointments.</p>
                 <button
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-sky-600 hover:bg-sky-700"
                   onClick={() => setShowAppointmentForm(true)}
