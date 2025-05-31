@@ -22,7 +22,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/appointments', appointmentRoutes);
-
+app.use('/api/medical-records', patientRoutes); // Assuming medical records are handled in patientRoutes
 
 
 // Start the server

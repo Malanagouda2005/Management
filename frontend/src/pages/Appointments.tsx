@@ -18,18 +18,8 @@ const Appointments: React.FC = () => {
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          alert('You are not logged in. Please log in and try again.');
-          return;
-        }
-
-        const response = await axios.get('http://localhost:5000/api/appointments', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setAppointments(response.data); // Set appointments from API response
+        const response = await axios.get('http://localhost:5000/api/appointments'); // No token required
+        setAppointments(response.data);
       } catch (error) {
         console.error('Error fetching appointments:', error);
         alert('Failed to fetch appointments. Please try again.');

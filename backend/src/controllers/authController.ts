@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { query } from '../utils/db';
 // Ensure the correct path to UserService
-import UserService from '../services/patientService'; // Verify the file exists at this path
+import { PatientService } from '../services/patientService'; // Use named import // Verify the file exists at this path
 
 class AuthController {
   // User signup
@@ -39,7 +39,7 @@ class AuthController {
     const { email, password } = req.body;
 
     // Validate user credentials (this is just an example)
-    const user = await UserService.validateUser(email, password);
+    const user = await PatientService.validateUser(email, password);
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
@@ -50,6 +50,25 @@ class AuthController {
     });
 
     res.status(200).json({ token });
+  }
+
+  async refreshToken(req: Request, res: Response) {
+    const { token } = req.body;
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'MALLU', { ignoreExpiration: true });
+      if (typeof decoded === 'object' && 'email' in decoded) {
+        const newToken = jwt.sign({ id: decoded.id, email: decoded.email }, process.env.JWT_SECRET || 'MALLU', {
+        expiresIn: '1h',
+      });
+        res.status(200).json({ token: newToken });
+      } else {
+        res.status(401).json({ message: 'Invalid token payload' });
+      }
+    } catch (error) {
+      console.error('Error refreshing token:', error);
+      res.status(401).json({ message: 'Invalid token' });
+    }
   }
 }
 

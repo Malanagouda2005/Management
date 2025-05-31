@@ -1,6 +1,7 @@
 import { query } from '../utils/db';
 import bcrypt from 'bcrypt'; // Ensure bcrypt is installed and imported
 import { PatientRequest, Patient } from '../types';
+import MedicalRecord from '../models/medicalRecordModel'; // Import the MedicalRecord model
 
 export class PatientService {
   // Create a new patient
@@ -113,6 +114,28 @@ public async getAllPatients(): Promise<Patient[]> {
       throw new Error('Failed to validate user');
     }
   }
-}
+public async addMedicalRecord(recordData: any): Promise<any> {
+  try {
+    const { patientId, diagnosis, symptoms, treatment, notes } = recordData;
 
-export default PatientService;
+    // Debugging logs
+    console.log('Record Data Received:', recordData);
+    console.log('Query Parameters:', [patientId, diagnosis, symptoms, treatment, notes]);
+
+    // Validate required fields
+    if (!patientId || !diagnosis || !symptoms || !treatment) {
+      throw new Error('Missing required fields for medical record');
+    }
+
+    const result = await query(
+      `INSERT INTO medical_records (patientId, diagnosis, symptoms, treatment, notes) VALUES (?, ?, ?, ?, ?)`,
+      [patientId, diagnosis, symptoms, treatment, notes]
+    );
+
+    return { id: result.insertId, ...recordData };
+  } catch (error) {
+    console.error('Error adding medical record:', error);
+    throw new Error('Failed to add medical record');
+  }
+}
+}// Ensure TypeScript recognizes the class type

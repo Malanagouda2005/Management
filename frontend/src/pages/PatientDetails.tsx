@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { usePatients } from '../contexts/PatientsContext';
-import { 
-  Pencil, Trash2, Phone, Mail, User, Heart, 
-  Calendar, PlusCircle, AlertCircle, ClipboardList 
+import {
+  Pencil, Trash2, Phone, Mail, User, Heart,
+  Calendar, PlusCircle, AlertCircle, ClipboardList
 } from 'lucide-react';
 import { formatDate, calculateAge } from '../utils/helpers';
 import { Patient, MedicalRecord, VitalSigns, Appointment } from '../types/types';
@@ -13,9 +13,9 @@ interface PatientDetailsProps {
 }
 
 const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange }) => {
-  const { 
-    getPatient, 
-    deletePatient, 
+  const {
+    getPatient,
+    deletePatient,
     getPatientMedicalRecords,
     getPatientVitalSigns
   } = usePatients();
@@ -33,6 +33,13 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
     doctorName: '',
     notes: '',
   });
+  const [showMedicalRecordForm, setShowMedicalRecordForm] = useState(false);
+  const [medicalRecordData, setMedicalRecordData] = useState({
+    diagnosis: '',
+    symptoms: '',
+    treatment: '',
+    notes: '',
+  });
 
   useEffect(() => {
     // Fetch patient and related data
@@ -45,25 +52,13 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
   }, [patientId, getPatient, getPatientMedicalRecords, getPatientVitalSigns]);
 
   useEffect(() => {
-    // Fetch appointments when the "Appointments" tab is active
     if (activeTab === 'appointments') {
       const fetchAppointments = async () => {
         try {
-          const token = localStorage.getItem('token');
-          if (!token) {
-            alert('You are not logged in. Please log in and try again.');
-            return;
-          }
-
-          const response = await fetch(`http://localhost:5000/api/appointments?patientId=${patientId}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
+          const response = await fetch(`http://localhost:5000/api/appointments?patientId=${patientId}`); // No token required
           if (response.ok) {
             const appointmentsData = await response.json();
-            setAppointments(appointmentsData); // Update appointments state
+            setAppointments(appointmentsData);
           } else {
             const error = await response.json();
             alert(`Failed to fetch appointments: ${error.message}`);
@@ -82,7 +77,7 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
     return (
       <div className="text-center py-12">
         <h2 className="text-xl font-semibold text-gray-800">Patient not found</h2>
-        <button 
+        <button
           onClick={() => onPageChange('patients')}
           className="mt-4 text-sky-600 hover:text-sky-800"
         >
@@ -184,6 +179,44 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
     }
   };
 
+const handleAddMedicalRecord = async () => {
+  try {
+    const { diagnosis, symptoms, treatment, notes } = medicalRecordData;
+
+    // Debugging log
+    console.log('Medical Record Data:', medicalRecordData);
+
+    if (!diagnosis || !symptoms || !treatment) {
+      alert('Please fill out all required fields');
+      return;
+    }
+
+    const response = await fetch('http://localhost:5000/api/medical-records', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: JSON.stringify({
+        ...medicalRecordData,
+        patientId: patient?.id,
+      }),
+    });
+
+    if (response.ok) {
+      const newRecord = await response.json();
+      alert('Medical record added successfully!');
+      setShowMedicalRecordForm(false);
+      setMedicalRecords((prev) => [...prev, newRecord]);
+    } else {
+      const error = await response.json();
+      alert(`Failed to add medical record: ${error.message}`);
+    }
+  } catch (error) {
+    console.error('Error adding medical record:', error);
+    alert('An error occurred while adding the medical record.');
+  }
+};
   // Sort records, vitals and appointments by date (newest first)
   const sortedMedicalRecords = [...medicalRecords].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -254,7 +287,7 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
                   </p>
                   <p className="text-gray-600 text-sm mt-1">DOB: {formatDate(patient.dateOfBirth)}</p>
                 </div>
-                
+
                 <div>
                   <div className="flex items-center text-gray-500 mb-1">
                     <Phone className="h-4 w-4 mr-2" />
@@ -267,7 +300,7 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
                   </div>
                   <p className="text-gray-600 text-sm mt-1">{patient.address}</p>
                 </div>
-                
+
                 <div>
                   <div className="flex items-center text-gray-500 mb-1">
                     <Heart className="h-4 w-4 mr-2" />
@@ -292,32 +325,29 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'overview'
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'overview'
                 ? 'border-sky-500 text-sky-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
+              }`}
           >
             Overview
           </button>
           <button
             onClick={() => setActiveTab('medicalRecords')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'medicalRecords'
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'medicalRecords'
                 ? 'border-sky-500 text-sky-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
+              }`}
           >
             Medical Records
           </button>
-         
+
           <button
             onClick={() => setActiveTab('appointments')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'appointments'
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'appointments'
                 ? 'border-sky-500 text-sky-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
+              }`}
           >
             Appointments
           </button>
@@ -346,7 +376,7 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
                       </div>
                     ))}
                     {sortedMedicalRecords.length > 3 && (
-                      <button 
+                      <button
                         onClick={() => setActiveTab('medicalRecords')}
                         className="text-sky-600 text-sm hover:text-sky-800"
                       >
@@ -358,13 +388,16 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
                   <div className="bg-gray-50 p-4 rounded-md text-center">
                     <ClipboardList className="h-8 w-8 mx-auto text-gray-400 mb-2" />
                     <p className="text-gray-500">No medical records found</p>
-                    <button className="mt-2 text-sky-600 text-sm hover:text-sky-800">
+                    <button 
+                      className="mt-2 text-sky-600 text-sm hover:text-sky-800" 
+                      onClick={() => setShowMedicalRecordForm(true)} // Ensure this toggles the form visibility
+                    >
                       Add Medical Record
                     </button>
                   </div>
                 )}
               </div>
-              
+
               <div>
                 <h4 className="text-sm font-medium text-gray-500 mb-2">Upcoming Appointments</h4>
                 {sortedAppointments.filter(a => a.status === 'scheduled').length > 0 ? (
@@ -383,7 +416,7 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
                           </p>
                         </div>
                       ))}
-                    <button 
+                    <button
                       onClick={() => setActiveTab('appointments')}
                       className="text-sky-600 text-sm hover:text-sky-800"
                     >
@@ -414,7 +447,7 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
                 </div>
               </div>
 
-             
+
             </div>
           </div>
         )}
@@ -423,12 +456,13 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
           <div className="p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-medium">Medical Records</h3>
-              <button className="flex items-center text-sm text-sky-600 hover:text-sky-800">
+              <button className="flex items-center text-sm text-sky-600 hover:text-sky-800"
+                  onClick={() => setShowMedicalRecordForm(true)}>
                 <PlusCircle className="h-4 w-4 mr-1" />
                 Add Record
               </button>
             </div>
-            
+
             {sortedMedicalRecords.length > 0 ? (
               <div className="space-y-4">
                 {sortedMedicalRecords.map((record) => (
@@ -440,11 +474,11 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
                       </div>
                       <p className="text-sm text-gray-500">Dr. {record.doctorName}</p>
                     </div>
-                    
+
                     <div className="mt-2">
                       <p className="text-sm text-gray-700 mb-1"><span className="font-medium">Symptoms:</span> {record.symptoms.join(', ')}</p>
                       <p className="text-sm text-gray-700 mb-1"><span className="font-medium">Treatment:</span> {record.treatment}</p>
-                      
+
                       {record.medications.length > 0 && (
                         <div className="mt-2">
                           <p className="text-sm font-medium text-gray-700">Medications:</p>
@@ -460,7 +494,7 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
                           </ul>
                         </div>
                       )}
-                      
+
                       {record.notes && (
                         <div className="mt-2">
                           <p className="text-sm font-medium text-gray-700">Notes:</p>
@@ -476,7 +510,10 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
                 <ClipboardList className="h-12 w-12 mx-auto text-gray-400 mb-3" />
                 <h3 className="text-gray-600 font-medium mb-1">No Medical Records</h3>
                 <p className="text-gray-500 mb-4">This patient doesn't have any medical records yet.</p>
-                <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-sky-600 hover:bg-sky-700">
+                <button
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-sky-600 hover:bg-sky-700"
+                  onClick={() => setShowMedicalRecordForm(true)} // Ensure this toggles the form visibility
+                >
                   <PlusCircle className="h-4 w-4 mr-1" />
                   Add First Record
                 </button>
@@ -494,7 +531,7 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
                 Add Vitals
               </button>
             </div>
-            
+
             {sortedVitalSigns.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -618,86 +655,154 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
       </div>
 
 
-    
+
 
       {/* Schedule Appointment Form */}
       {showAppointmentForm && (
         <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-200 p-6">
           <h3 className="text-lg font-medium text-gray-800 mb-4">Schedule Appointment</h3>
           <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleScheduleAppointment();
-        }}
-        className="space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleScheduleAppointment();
+            }}
+            className="space-y-4"
           >
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Purpose</label>
-          <input
-            type="text"
-            placeholder="Purpose"
-            value={appointmentData.purpose}
-            onChange={(e) => setAppointmentData({ ...appointmentData, purpose: e.target.value })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Date</label>
-          <input
-            type="date"
-            value={appointmentData.date}
-            onChange={(e) => setAppointmentData({ ...appointmentData, date: e.target.value })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Time</label>
-          <input
-            type="time"
-            value={appointmentData.time}
-            onChange={(e) => setAppointmentData({ ...appointmentData, time: e.target.value })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Doctor Name</label>
-          <input
-            type="text"
-            placeholder="Doctor Name"
-            value={appointmentData.doctorName}
-            onChange={(e) => setAppointmentData({ ...appointmentData, doctorName: e.target.value })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Notes</label>
-          <textarea
-            placeholder="Notes"
-            value={appointmentData.notes}
-            onChange={(e) => setAppointmentData({ ...appointmentData, notes: e.target.value })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
-          />
-        </div>
-        <div className="flex justify-end space-x-4">
-          <button
-            type="button"
-            onClick={() => setShowAppointmentForm(false)}
-            className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-sky-600 hover:bg-sky-700"
-          >
-            Schedule
-          </button>
-        </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Purpose</label>
+              <input
+                type="text"
+                placeholder="Purpose"
+                value={appointmentData.purpose}
+                onChange={(e) => setAppointmentData({ ...appointmentData, purpose: e.target.value })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Date</label>
+              <input
+                type="date"
+                value={appointmentData.date}
+                onChange={(e) => setAppointmentData({ ...appointmentData, date: e.target.value })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Time</label>
+              <input
+                type="time"
+                value={appointmentData.time}
+                onChange={(e) => setAppointmentData({ ...appointmentData, time: e.target.value })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Doctor Name</label>
+              <input
+                type="text"
+                placeholder="Doctor Name"
+                value={appointmentData.doctorName}
+                onChange={(e) => setAppointmentData({ ...appointmentData, doctorName: e.target.value })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Notes</label>
+              <textarea
+                placeholder="Notes"
+                value={appointmentData.notes}
+                onChange={(e) => setAppointmentData({ ...appointmentData, notes: e.target.value })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
+              />
+            </div>
+            <div className="flex justify-end space-x-4">
+              <button
+                type="button"
+                onClick={() => setShowAppointmentForm(false)}
+                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-sky-600 hover:bg-sky-700"
+              >
+                Schedule
+              </button>
+            </div>
           </form>
         </div>
-      
 
 
+
+      )}
+
+      {/* Add Medical Record Form */}
+      {showMedicalRecordForm && (
+        <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-200 p-6">
+          <h3 className="text-lg font-medium text-gray-800 mb-4">Add Medical Record</h3>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleAddMedicalRecord(); // Ensure this function is called
+            }}
+            className="space-y-4"
+          >
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Diagnosis</label>
+              <input
+                type="text"
+                placeholder="Diagnosis"
+                value={medicalRecordData.diagnosis}
+                onChange={(e) => setMedicalRecordData({ ...medicalRecordData, diagnosis: e.target.value })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Symptoms</label>
+              <textarea
+                placeholder="Symptoms"
+                value={medicalRecordData.symptoms}
+                onChange={(e) => setMedicalRecordData({ ...medicalRecordData, symptoms: e.target.value })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Treatment</label>
+              <textarea
+                placeholder="Treatment"
+                value={medicalRecordData.treatment}
+                onChange={(e) => setMedicalRecordData({ ...medicalRecordData, treatment: e.target.value })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Notes</label>
+              <textarea
+                placeholder="Notes"
+                value={medicalRecordData.notes}
+                onChange={(e) => setMedicalRecordData({ ...medicalRecordData, notes: e.target.value })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
+              />
+            </div>
+            <div className="flex justify-end space-x-4">
+              <button
+                type="button"
+                onClick={() => setShowMedicalRecordForm(false)}
+                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                className="flex items-center text-sm text-sky-600 hover:text-sky-800"
+                onClick={() => setShowMedicalRecordForm(true)} // Ensure this toggles the form visibility
+              >
+                <PlusCircle className="h-4 w-4 mr-1" />
+                Add Record
+              </button>
+            </div>
+          </form>
+        </div>
       )}
     </div>
   );

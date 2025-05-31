@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { PatientController } from '../controllers/patientController';
 import { authenticate } from '../middlewares/authMiddleware';
+import { PatientService } from '../services/patientService';
 
 const router = Router();
 const patientController = new PatientController();
@@ -11,5 +12,6 @@ router.get('/:id', authenticate, patientController.getPatientById);
 router.put('/:id', authenticate, patientController.updatePatient);
 router.delete('/:id', authenticate, patientController.deletePatient);
 router.get('/', authenticate, patientController.getPatients); // Fetch all patients
+router.post('/medical-records', authenticate, patientController.addMedicalRecord);
 
 export default router;

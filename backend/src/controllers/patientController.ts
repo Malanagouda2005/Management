@@ -4,43 +4,43 @@ import { PatientService } from '../services/patientService';
 const patientService = new PatientService();
 
 export class PatientController {
- public async addPatient(req: Request, res: Response): Promise<void> {
-  try {
-    const {
-      firstName,
-      lastName,
-      dateOfBirth,
-      gender,
-      contactNumber,
-      email,
-      address,
-      emergencyContact,
-      bloodType,
-      allergies,
-    } = req.body;
+  public async addPatient(req: Request, res: Response): Promise<void> {
+    try {
+      const {
+        firstName,
+        lastName,
+        dateOfBirth,
+        gender,
+        contactNumber,
+        email,
+        address,
+        emergencyContact,
+        bloodType,
+        allergies,
+      } = req.body;
 
-    // Validate required fields
-    if (!firstName || !lastName || !dateOfBirth || !gender || !contactNumber || !email || !address || !emergencyContact) {
-      res.status(400).json({ message: 'Missing required fields' });
+      // Validate required fields
+      if (!firstName || !lastName || !dateOfBirth || !gender || !contactNumber || !email || !address || !emergencyContact) {
+        res.status(400).json({ message: 'Missing required fields' });
+      }
+
+      const newPatient = await patientService.createPatient(req.body);
+      res.status(201).json(newPatient); // Created
+    } catch (error) {
+      console.error('Error adding patient:', error);
+      res.status(500).json({ message: 'Failed to add patient', error: (error as Error).message });
     }
-
-    const newPatient = await patientService.createPatient(req.body);
-    res.status(201).json(newPatient); // Created
-  } catch (error) {
-    console.error('Error adding patient:', error);
-    res.status(500).json({ message: 'Failed to add patient', error: (error as Error).message });
   }
-}
 
-public async getPatients(req: Request, res: Response): Promise<void> {
-  try {
-    const patients = await patientService.getAllPatients();
-    res.status(200).json(patients); // Send the patients as a JSON response
-  } catch (error) {
-    console.error('Error fetching patients:', error);
-    res.status(500).json({ message: 'Failed to fetch patients', error: (error as Error).message });
+  public async getPatients(req: Request, res: Response): Promise<void> {
+    try {
+      const patients = await patientService.getAllPatients();
+      res.status(200).json(patients); // Send the patients as a JSON response
+    } catch (error) {
+      console.error('Error fetching patients:', error);
+      res.status(500).json({ message: 'Failed to fetch patients', error: (error as Error).message });
+    }
   }
-}
 
   public async getPatientById(req: Request, res: Response): Promise<void> {
     try {
@@ -55,19 +55,20 @@ public async getPatients(req: Request, res: Response): Promise<void> {
       res.status(500).json({ message: 'Failed to fetch patient', error: (error as Error).message });
     }
   }
-public async updatePatient(req: Request, res: Response): Promise<void> {
-  try {
-    const updatedPatient = await patientService.updatePatient(req.params.id, req.body);
-    if (updatedPatient) {
-      res.status(200).json(updatedPatient); // OK
-    } else {
-      res.status(404).json({ message: 'Patient not found' }); // Not Found
+
+  public async updatePatient(req: Request, res: Response): Promise<void> {
+    try {
+      const updatedPatient = await patientService.updatePatient(req.params.id, req.body);
+      if (updatedPatient) {
+        res.status(200).json(updatedPatient); // OK
+      } else {
+        res.status(404).json({ message: 'Patient not found' }); // Not Found
+      }
+    } catch (error) {
+      console.error('Error updating patient:', error);
+      res.status(500).json({ message: 'Failed to update patient', error: (error as Error).message });
     }
-  } catch (error) {
-    console.error('Error updating patient:', error);
-    res.status(500).json({ message: 'Failed to update patient', error: (error as Error).message });
   }
-}
 
   public async deletePatient(req: Request, res: Response): Promise<void> {
     try {
@@ -82,4 +83,17 @@ public async updatePatient(req: Request, res: Response): Promise<void> {
       res.status(500).json({ message: 'Failed to delete patient', error: (error as Error).message });
     }
   }
+
+  public async addMedicalRecord(req: Request, res: Response): Promise<void> {
+  try {
+    const newRecord = await patientService.addMedicalRecord(req.body);
+    res.status(201).json(newRecord); // Send response once
+  } catch (error) {
+    console.error('Error adding medical record:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    if (!res.headersSent) { // Ensure headers are not already sent
+      res.status(500).json({ message: 'Failed to add medical record', error: errorMessage });
+    }
+  }
+}
 }
