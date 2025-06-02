@@ -24,19 +24,43 @@ const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
 
   useEffect(() => {
     // Calculate dashboard statistics
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to midnight for accurate comparison
+
+    // Get today's local date string (yyyy-mm-dd)
+    const todayStr = today.toISOString().split('T')[0];
+
+    // Fix: Always compare appointment date as yyyy-mm-dd string
+    const todayAppointments = appointments.filter(a => {
+      let apptDateStr = '';
+      if (typeof a.date === 'string') {
+        // Handles both 'yyyy-mm-dd' and ISO strings
+        apptDateStr = a.date.split('T')[0];
+      } else {
+        // Handles Date object
+        apptDateStr = new Date(a.date).toISOString().split('T')[0];
+      }
+      return apptDateStr === todayStr;
+    });
+
     const lastWeek = new Date();
     lastWeek.setDate(lastWeek.getDate() - 7);
-    const lastWeekISO = lastWeek.toISOString();
+    lastWeek.setHours(0, 0, 0, 0);
 
-    const todayAppointments = appointments.filter(a => a.date === today);
-    
     const newPatientsThisWeek = patients.filter(
-      p => new Date(p.createdAt) >= lastWeek
+      p => {
+        const created = new Date(p.createdAt);
+        created.setHours(0, 0, 0, 0);
+        return created >= lastWeek;
+      }
     ).length;
-    
+
     const appointmentsThisWeek = appointments.filter(
-      a => new Date(a.date + 'T00:00:00') >= lastWeek
+      a => {
+        let apptDate = typeof a.date === 'string' ? new Date(a.date) : a.date;
+        apptDate.setHours(0, 0, 0, 0);
+        return apptDate >= lastWeek;
+      }
     ).length;
 
     setStats({
@@ -201,7 +225,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
             )}
           </div>
           <div className="p-4 border-t border-gray-200">
-            <button className="text-sky-600 hover:text-sky-700 text-sm font-medium">
+            <button 
+              onClick={() => onPageChange('appointments')}
+              className="text-sky-600 hover:text-sky-700 text-sm font-medium"
+            >
               View All Appointments
             </button>
           </div>
@@ -216,11 +243,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onPageChange }) => {
         >
           Add New Patient
         </button>
-        <button
+        {/* <button
           className="bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-50 transition shadow-sm"
         >
           Schedule Appointment
-        </button>
+        </button> */}
       </div>
     </div>
   );

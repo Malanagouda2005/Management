@@ -8,6 +8,10 @@ interface Report {
   treatment: string;
   notes: string;
   createdAt: string;
+  patient?: {
+    firstName: string;
+    lastName: string;
+  };
 }
 
 const Reports: React.FC = () => {
@@ -34,6 +38,12 @@ const Reports: React.FC = () => {
           {reports.map((report) => (
             <li key={report.id} className="border-b pb-4">
               <h2 className="text-lg font-semibold">{report.diagnosis}</h2>
+              {/* Display patient name if available */}
+              {report.patient && (
+                <p className="text-gray-700 font-medium">
+                  Patient: {report.patient.firstName} {report.patient.lastName}
+                </p>
+              )}
               <p className="text-gray-600">Symptoms: {report.symptoms}</p>
               <p className="text-gray-600">Treatment: {report.treatment}</p>
               <p className="text-gray-600">Notes: {report.notes}</p>

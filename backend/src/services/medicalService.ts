@@ -48,4 +48,26 @@ export class MedicalService {
       throw new Error('Failed to fetch medical records');
     }
   }
+
+
+
+public async getMedicalRecordsByPatientId(patientId: string): Promise<any[]> {
+  try {
+    const records = await query('SELECT * FROM medical_records WHERE patientId = ?', [patientId]);
+    // Ensure symptoms is always an array
+    return records.map((record: any) => ({
+      ...record,
+      symptoms: Array.isArray(record.symptoms)
+        ? record.symptoms
+        : typeof record.symptoms === 'string'
+          ? record.symptoms.split(',').map((s: string) => s.trim())
+          : [],
+    }));
+  } catch (error) {
+    console.error('Error fetching medical records by patient ID:', error);
+    throw new Error('Failed to fetch medical records');
+  }
+}
+
+
 }

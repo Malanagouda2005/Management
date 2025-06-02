@@ -25,6 +25,7 @@ interface PatientsContextType {
   deleteAppointment: (id: string) => void;
   getPatientAppointments: (patientId: string) => Appointment[];
   getTodayAppointments: () => Appointment[];
+  fetchTodayAppointments: () => Promise<Appointment[]>;
 }
 
 const PatientsContext = createContext<PatientsContextType | undefined>(undefined);
@@ -37,26 +38,21 @@ export const PatientsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   // Fetch patients from the API
   useEffect(() => {
-  const fetchPatients = async () => {
-    try {
-      // Retrieve the token from localStorage (or wherever it's stored)
-      const token = localStorage.getItem('token');
-
-      // Make the API request with the Authorization header
-      const response = await axios.get('http://localhost:5000/api/patients', {
-        headers: {
-          Authorization: `Bearer ${token}`, // Include the token
-        },
-      });
-
-      setPatients(response.data);
-    } catch (error) {
-      console.error('Error fetching patients:', error);
-    }
-  };
-
-  fetchPatients();
-}, []);
+    const fetchPatients = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get('http://localhost:5000/api/patients', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setPatients(response.data);
+      } catch (error) {
+        console.error('Error fetching patients:', error);
+      }
+    };
+    fetchPatients();
+  }, []);
 
   // Load data from localStorage on initial mount
   useEffect(() => {
@@ -102,18 +98,15 @@ export const PatientsProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   const updatePatient = (id: string, patientData: Partial<Patient>) => {
-    setPatients(prev => prev.map(patient => 
-      patient.id === id ? { 
-        ...patient, 
-        ...patientData, 
-        updatedAt: new Date().toISOString() 
-      } : patient
+    setPatients(prev => prev.map(patient =>
+      patient.id === id
+        ? { ...patient, ...patientData, updatedAt: new Date().toISOString() }
+        : patient
     ));
   };
 
   const deletePatient = (id: string) => {
     setPatients(prev => prev.filter(patient => patient.id !== id));
-    // Also delete related records
     setMedicalRecords(prev => prev.filter(record => record.patientId !== id));
     setVitalSigns(prev => prev.filter(vitals => vitals.patientId !== id));
     setAppointments(prev => prev.filter(appointment => appointment.patientId !== id));
@@ -133,7 +126,7 @@ export const PatientsProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   const updateMedicalRecord = (id: string, recordData: Partial<MedicalRecord>) => {
-    setMedicalRecords(prev => prev.map(record => 
+    setMedicalRecords(prev => prev.map(record =>
       record.id === id ? { ...record, ...recordData } : record
     ));
   };
@@ -156,7 +149,7 @@ export const PatientsProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   const updateVitalSigns = (id: string, vitalsData: Partial<VitalSigns>) => {
-    setVitalSigns(prev => prev.map(vitals => 
+    setVitalSigns(prev => prev.map(vitals =>
       vitals.id === id ? { ...vitals, ...vitalsData } : vitals
     ));
   };
@@ -179,7 +172,7 @@ export const PatientsProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   const updateAppointment = (id: string, appointmentData: Partial<Appointment>) => {
-    setAppointments(prev => prev.map(appointment => 
+    setAppointments(prev => prev.map(appointment =>
       appointment.id === id ? { ...appointment, ...appointmentData } : appointment
     ));
   };
@@ -192,9 +185,36 @@ export const PatientsProvider: React.FC<{ children: ReactNode }> = ({ children }
     return appointments.filter(appointment => appointment.patientId === patientId);
   };
 
+  // Synchronous: filter today's appointments from local state
   const getTodayAppointments = () => {
-    const today = new Date().toISOString().split('T')[0];
-    return appointments.filter(appointment => appointment.date === today);
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    return appointments.filter(appointment => {
+      const apptDateStr = appointment.date.includes('T')
+        ? appointment.date.split('T')[0]
+        : appointment.date;
+      return apptDateStr === todayStr;
+    });
+  };
+
+  // Async: fetch today's appointments from API
+  const fetchTodayAppointments = async (): Promise<Appointment[]> => {
+    try {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:5000/api/appointments', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      return response.data.filter((appointment: Appointment) => {
+        const apptDateStr = appointment.date.includes('T')
+          ? appointment.date.split('T')[0]
+          : appointment.date;
+        return apptDateStr === todayStr;
+      });
+    } catch (error) {
+      console.error("Error fetching today's appointments:", error);
+      return [];
+    }
   };
 
   return (
@@ -219,7 +239,8 @@ export const PatientsProvider: React.FC<{ children: ReactNode }> = ({ children }
       updateAppointment,
       deleteAppointment,
       getPatientAppointments,
-      getTodayAppointments
+      getTodayAppointments,
+      fetchTodayAppointments
     }}>
       {children}
     </PatientsContext.Provider>
@@ -228,7 +249,7 @@ export const PatientsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
 export const usePatients = () => {
   const context = useContext(PatientsContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('usePatients must be used within a PatientsProvider');
   }
   return context;

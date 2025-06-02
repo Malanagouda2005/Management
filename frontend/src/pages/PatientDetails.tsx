@@ -35,10 +35,11 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
   });
   const [showMedicalRecordForm, setShowMedicalRecordForm] = useState(false);
   const [medicalRecordData, setMedicalRecordData] = useState({
-    diagnosis: '',
-    symptoms: '',
-    treatment: '',
-    notes: '',
+      diagnosis: '',
+      symptoms: '',
+      treatment: '',
+      notes: '',
+      // Initialize createdAt with the current date and time
   });
 
   useEffect(() => {
@@ -231,9 +232,9 @@ const handleAddMedicalRecord = async () => {
   }
 };
   // Sort records, vitals and appointments by date (newest first)
-  const sortedMedicalRecords = [...medicalRecords].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
+  const sortedMedicalRecords = [...medicalRecords]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 5);
 
   const sortedVitalSigns = [...vitalSigns].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -383,9 +384,9 @@ const handleAddMedicalRecord = async () => {
                       <div key={record.id} className="bg-gray-50 p-3 rounded-md">
                         <div className="flex justify-between">
                           <p className="text-sm font-medium">{record.diagnosis}</p>
-                          <p className="text-xs text-gray-500">{formatDate(record.date)}</p>
+                          <p className="text-xs text-gray-500">{formatDate(record. createdAt)}</p>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">By Dr. {record.doctorName}</p>
+                        <p className="text-xs text-gray-500 mt-1">By Dr.Smith</p>
                       </div>
                     ))}
                     {sortedMedicalRecords.length > 3 && (
@@ -483,16 +484,23 @@ const handleAddMedicalRecord = async () => {
                     <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-2">
                       <div>
                         <h4 className="text-md font-medium">{record.diagnosis}</h4>
-                        <p className="text-sm text-gray-500">Date: {formatDate(record.date)}</p>
+                    <p className="text-xs text-gray-500">{formatDate(record. createdAt)}</p>
                       </div>
-                      <p className="text-sm text-gray-500">Dr. {record.doctorName}</p>
+                      {/* <p className="text-sm text-gray-500">Dr.Smith</p> */}
                     </div>
 
                     <div className="mt-2">
-                      <p className="text-sm text-gray-700 mb-1"><span className="font-medium">Symptoms:</span> {record.symptoms.join(', ')}</p>
+                      <p className="text-sm text-gray-700 mb-1">
+                        <span className="font-medium">Symptoms:</span>{" "}
+                        {Array.isArray(record.symptoms)
+                          ? record.symptoms.join(', ')
+                          : typeof record.symptoms === 'string'
+                            ? record.symptoms
+                            : ''}
+                      </p>
                       <p className="text-sm text-gray-700 mb-1"><span className="font-medium">Treatment:</span> {record.treatment}</p>
 
-                      {record.medications.length > 0 && (
+                      {Array.isArray(record.medications) && record.medications.length > 0 && (
                         <div className="mt-2">
                           <p className="text-sm font-medium text-gray-700">Medications:</p>
                           <ul className="mt-1 space-y-1">

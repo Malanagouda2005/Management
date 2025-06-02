@@ -33,7 +33,7 @@ export interface VitalSigns {
 export interface MedicalRecord {
   id: string;
   patientId: string;
-  date: string;
+  createdAt: string;
   diagnosis: string;
   symptoms: string[];
   treatment: string;

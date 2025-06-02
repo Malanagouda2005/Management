@@ -7,4 +7,7 @@ const router = Router();
 router.post('/', authenticate, medicalController.addMedicalRecord);
 router.get('/', authenticate, medicalController.getAllMedicalRecords);
 
+router.get('/:patientId', authenticate, medicalController.getMedicalRecordsByPatientId);
+
+
 export default router;

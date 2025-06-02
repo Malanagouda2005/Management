@@ -26,6 +26,16 @@ class MedicalController {
       res.status(500).json({ message: 'Failed to fetch medical records', error: (error as Error).message });
     }
   }
+  public async getMedicalRecordsByPatientId(req: Request, res: Response): Promise<void> {
+    try {
+      const { patientId } = req.params;
+      const records = await medicalService.getMedicalRecordsByPatientId(patientId);
+      res.status(200).json(records);
+    } catch (error) {
+      console.error('Error fetching medical records by patient ID:', error);
+      res.status(500).json({ message: 'Failed to fetch medical records', error: (error as Error).message });
+    }
+  }
 }
 
 export default new MedicalController();
