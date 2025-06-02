@@ -46,10 +46,23 @@ const PatientDetails: React.FC<PatientDetailsProps> = ({ patientId, onPageChange
     const patientData = getPatient(patientId);
     if (patientData) {
       setPatient(patientData);
-      setMedicalRecords(getPatientMedicalRecords(patientId));
+
+      // Fetch medical records for this patient from backend
+      fetch(`http://localhost:5000/api/medical-records/${patientId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => setMedicalRecords(data))
+        .catch((err) => {
+          console.error('Error fetching medical records:', err);
+          setMedicalRecords([]);
+        });
+
       setVitalSigns(getPatientVitalSigns(patientId));
     }
-  }, [patientId, getPatient, getPatientMedicalRecords, getPatientVitalSigns]);
+  }, [patientId, getPatient, getPatientVitalSigns]);
 
   useEffect(() => {
     if (activeTab === 'appointments') {

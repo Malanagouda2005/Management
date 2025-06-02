@@ -5,6 +5,7 @@ import { connect as connectDB } from './utils/db';
 import authRoutes from './routes/authRoutes';
 import patientRoutes from './routes/patientRoutes';
 import appointmentRoutes from './routes/appointmentRoutes';
+import medicalRoutes from './routes/medicalRoutes'; // Assuming medical records are handled in medicalRoutes
 
 
 const app = express();
@@ -22,7 +23,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/appointments', appointmentRoutes);
-app.use('/api/medical-records', patientRoutes); // Assuming medical records are handled in patientRoutes
+app.use('/api/medical-records', medicalRoutes);
+app
+ // Assuming medical records are handled in patientRoutes
 
 
 // Start the server

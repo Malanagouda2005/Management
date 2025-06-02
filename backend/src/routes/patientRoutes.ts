@@ -3,6 +3,7 @@ import { PatientController } from '../controllers/patientController';
 import { authenticate } from '../middlewares/authMiddleware';
 import { PatientService } from '../services/patientService';
 
+
 const router = Router();
 const patientController = new PatientController();
 
@@ -11,7 +12,5 @@ router.post('/', authenticate, patientController.addPatient);
 router.get('/:id', authenticate, patientController.getPatientById);
 router.put('/:id', authenticate, patientController.updatePatient);
 router.delete('/:id', authenticate, patientController.deletePatient);
-router.get('/', authenticate, patientController.getPatients); // Fetch all patients
-router.post('/medical-records', authenticate, patientController.addMedicalRecord);
-
+router.get('/', authenticate, patientController.getPatients);  // Fetch all medical records 
 export default router;

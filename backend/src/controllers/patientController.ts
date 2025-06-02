@@ -84,16 +84,4 @@ export class PatientController {
     }
   }
 
-  public async addMedicalRecord(req: Request, res: Response): Promise<void> {
-  try {
-    const newRecord = await patientService.addMedicalRecord(req.body);
-    res.status(201).json(newRecord); // Send response once
-  } catch (error) {
-    console.error('Error adding medical record:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    if (!res.headersSent) { // Ensure headers are not already sent
-      res.status(500).json({ message: 'Failed to add medical record', error: errorMessage });
-    }
-  }
-}
 }
