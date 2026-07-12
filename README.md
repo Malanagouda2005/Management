@@ -7,7 +7,7 @@ The **Patient Database Management System (PDMS)** is a software application desi
 ---
 
 ## 🎯 Objectives
-
+ 
 * Digitize patient records for easy access and management
 * Reduce paperwork and manual errors
 * Improve data security and confidentiality
